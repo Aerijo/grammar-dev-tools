@@ -1,4 +1,5 @@
 {
+  "defaultSeverity": "warning",
   "compilerOptions": {
     "strict": true,
     "declaration": true,

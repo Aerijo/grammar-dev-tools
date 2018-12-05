@@ -1,0 +1,26 @@
+{
+  "name": "grammar-dev-tools",
+  "main": "./dist/main",
+  "version": "0.0.0",
+  "description": "A package to assist development of grammars in Atom",
+  "keywords": [
+    "grammar"
+  ],
+  "repository": "https://github.com/Aerijo/grammar-dev-tools",
+  "license": "MIT",
+  "engines": {
+    "atom": ">=1.0.0 <2.0.0"
+  },
+  "dependencies": {
+    "etch": "latest"
+  },
+  "devDependencies": {
+    "@types/atom": "latest",
+    "@types/text-buffer": "^13.0.4",
+    "typescript": "latest",
+    "tslint": "latest"
+  },
+  "scripts": {
+    "build": "tsc"
+  }
+}
