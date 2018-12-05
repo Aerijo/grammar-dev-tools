@@ -1,7 +1,7 @@
 import * as etch from "etch"
 import { CompositeDisposable, ViewModel, TextEditor } from "atom"
 
-import { ScopeModel } from "./scope-model"
+import { ScopeModel, GRAMMAR_TYPE } from "./scope-model"
 
 const $ = etch.dom
 
@@ -35,6 +35,8 @@ export class ScopeView implements ViewModel {
     return (
       $.div({ className: "grammar-view", width: "500px" },
         $.ul({},
+          $.li({}, `Grammar: ${this.model.grammarType === GRAMMAR_TYPE.TEXTMATE ? "TextMate" : "Tree-sitter"}`),
+          $.li({}, `Name: ${this.model.rootLanguage}`),
           $.li({}, "Scopes:",
             $.ul({}, this.model.scopes.map(s => $.li({}, s)))
           ),
@@ -62,15 +64,32 @@ export class ScopeView implements ViewModel {
       atom.workspace.observeTextEditors(editor => {
         console.log("Adding", editor)
 
-        this.subscriptions.add(editor.observeCursors(cursor => {
-          this.subscriptions.add(cursor.onDidChangePosition(event => {
-            const newPosition = event.newBufferPosition
-
-            this.model.update(editor, newPosition)
-            this.update()
-          }))
-        }))
+        this.subscriptions.add(
+          editor.observeCursors(cursor => {
+            this.subscriptions.add(cursor.onDidChangePosition(event => {
+              const newPosition = event.newBufferPosition
+              this.model.update(editor, newPosition)
+              this.update()
+            }))
+          }),
+          editor.onDidChange(() => {
+            this.updateWithEditor(editor)
+          }),
+          editor.onDidChangeGrammar(() => {
+            this.updateWithEditor(editor)
+          })
+        )
+      }),
+      atom.workspace.onDidChangeActiveTextEditor(editor => {
+        if (editor === undefined) return
+        this.updateWithEditor(editor)
       })
     )
+  }
+
+  updateWithEditor (editor: TextEditor): void {
+    const cursorPosition = editor.getCursorBufferPosition()
+    this.model.update(editor, cursorPosition)
+    this.update()
   }
 }

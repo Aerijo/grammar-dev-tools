@@ -6,7 +6,16 @@ const ADJUST_END_OF_LINE_SCOPE = true
 const REPLACE_SPACES = true
 const SPACE_CHAR = "\u2423"
 
+export const enum GRAMMAR_TYPE {
+  TEXTMATE,
+  TREESITTER
+}
+
 export class ScopeModel {
+
+  grammarType: GRAMMAR_TYPE
+
+  rootLanguage: string
 
   scopes: ReadonlyArray<string>
   text: string
@@ -15,6 +24,8 @@ export class ScopeModel {
   immediateRange: Range
 
   constructor () {
+    this.grammarType = GRAMMAR_TYPE.TEXTMATE
+    this.rootLanguage = ""
     this.scopes = []
     this.text = ""
     this.textImmediate = ""
@@ -23,9 +34,12 @@ export class ScopeModel {
   }
 
   update (editor: TextEditor, position: Point): void {
+    this.rootLanguage = editor.getGrammar().name
     if (isTreeSitter(editor)) {
+      this.grammarType = GRAMMAR_TYPE.TREESITTER
       this.getTreeSitterBufferRangesForScopeAtPosition(editor, position)
     } else {
+      this.grammarType = GRAMMAR_TYPE.TEXTMATE
       this.getTextMateBufferRangesForScopeAtPosition(editor, position)
     }
 
@@ -215,8 +229,12 @@ export class ScopeModel {
 
   }
 
-  getTreeSitterBufferRangesForScopeAtPosition (_editor: TextEditor, _position: Point): void {
-    console.log("Getting Tree-sitter data...")
+  getTreeSitterBufferRangesForScopeAtPosition (editor: any, position: Point): void {
+    console.log(editor, position)
+
+    this.scopes = editor.languageMode.scopeDescriptorForPosition(position).getScopesArray()
+    this.scopeRange = new Range([0,0],[0,0])
+    this.immediateRange = new Range([0,0],[0,0])
   }
 }
 
