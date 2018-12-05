@@ -35,7 +35,7 @@ export class ScopeView implements ViewModel {
     return (
       $.div({ className: "grammar-view", width: "500px" },
         $.ul({},
-          $.li({}, `Grammar: ${this.model.grammarType === GRAMMAR_TYPE.TEXTMATE ? "TextMate" : "Tree-sitter"}`),
+          $.li({}, `Type: ${this.model.grammarType === GRAMMAR_TYPE.TEXTMATE ? "TextMate" : "Tree-sitter"}`),
           $.li({}, `Name: ${this.model.rootLanguage}`),
           $.li({}, "Scopes:",
             $.ul({}, this.model.scopes.map(s => $.li({}, s)))
