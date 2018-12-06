@@ -180,6 +180,7 @@ export class ScopeModel {
       const tag = tags[tagIndex]
       if (tag < 0) {
         if (setImmediate) {
+          debugger
           setImmediate = false
           this.immediateRange.end.row = row
           this.immediateRange.end.column = column
@@ -229,8 +230,11 @@ export class ScopeModel {
       }
     }
 
-    this.immediateRange.end = languageMode.buffer.getEndPosition()
-    this.scopeRange.end = this.immediateRange.end
+    const endPoint = languageMode.buffer.getEndPosition()
+    if (setImmediate) {
+      this.immediateRange.end = endPoint.copy()
+    }
+    this.scopeRange.end = endPoint.copy()
   }
 
   setTexts (editor: TextEditor): void {
