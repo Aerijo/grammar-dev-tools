@@ -38,14 +38,15 @@ export class ScopeModel {
   update (editor: TextEditor, position: Point): void {
     const grammar: any = editor.getGrammar()
     this.rootLanguage = grammar.name
-    this.maxTokensPerLine = grammar.getMaxTokensPerLine()
-    this.maxLineLength = grammar.maxLineLength
 
     if (isTreeSitter(editor)) {
       this.grammarType = GRAMMAR_TYPE.TREESITTER
       this.getTreeSitterBufferRangesForScopeAtPosition(editor, position)
     } else {
       this.grammarType = GRAMMAR_TYPE.TEXTMATE
+
+      this.maxTokensPerLine = grammar.getMaxTokensPerLine()
+      this.maxLineLength = grammar.maxLineLength
       this.getTextMateBufferRangesForScopeAtPosition(editor, position)
     }
 

@@ -46,8 +46,8 @@ export class ScopeView implements ViewModel {
           ),
           $.li({}, "Text:",
             $.ul({},
-              $.li({}, `All [${getRangeString(this.model.scopeRange)}] >> ${this.model.text}`),
-              $.li({}, `Imm [${getRangeString(this.model.immediateRange)}] >> ${this.model.textImmediate}`)
+              $.li({}, `All [${getRangeString(this.model.scopeRange)}] >>`, $.br(), this.model.text),
+              $.li({}, `Imm [${getRangeString(this.model.immediateRange)}] >>`, $.br(), this.model.textImmediate)
             )
           ),
           $.li({}, `maxTokensPerLine: ${this.model.maxTokensPerLine}`),
