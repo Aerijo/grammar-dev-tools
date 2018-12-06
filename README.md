@@ -13,6 +13,7 @@ A collection of tools to make developing grammars (TextMate and Tree-sitter) eas
 - Generate relational view of grammar
 - Generate all scopes used by grammar
 - Links to development guides
+- Detect truncated lines and max token limits
 
 
 ### Guide (TODO)

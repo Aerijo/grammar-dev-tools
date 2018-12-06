@@ -1,5 +1,5 @@
 import * as etch from "etch"
-import { CompositeDisposable, ViewModel, TextEditor } from "atom"
+import { CompositeDisposable, ViewModel, TextEditor, Range } from "atom"
 
 import { ScopeModel, GRAMMAR_TYPE } from "./scope-model"
 
@@ -13,8 +13,6 @@ export class ScopeView implements ViewModel {
   subscriptions: CompositeDisposable
 
   constructor (model: ScopeModel, options?: any) {
-    console.log("Constructing view...")
-
     this.editors = new Set()
     this.model = model
     this.options = options
@@ -23,29 +21,47 @@ export class ScopeView implements ViewModel {
     this.subscribeToEvents()
 
     etch.initialize(this)
-
-    console.log(this)
   }
 
   getTitle (): string {
-    return "Scope properties at cursor"
+    return "Grammar properties"
   }
 
   render () {
+    if (this.model.grammarType === GRAMMAR_TYPE.TEXTMATE) {
+      return this.renderTextMate()
+    } else {
+      return this.renderTreeSitter()
+    }
+  }
+
+  renderTextMate () {
     return (
       $.div({ className: "grammar-view", width: "500px" },
         $.ul({},
-          $.li({}, `Type: ${this.model.grammarType === GRAMMAR_TYPE.TEXTMATE ? "TextMate" : "Tree-sitter"}`),
+          $.li({}, "Type: TextMate"),
           $.li({}, `Name: ${this.model.rootLanguage}`),
           $.li({}, "Scopes:",
             $.ul({}, this.model.scopes.map(s => $.li({}, s)))
           ),
           $.li({}, "Text:",
             $.ul({},
-              $.li({}, `All: ${this.model.text}`),
-              $.li({}, `Imm: ${this.model.textImmediate}`)
+              $.li({}, `All [${getRangeString(this.model.scopeRange)}] >> ${this.model.text}`),
+              $.li({}, `Imm [${getRangeString(this.model.immediateRange)}] >> ${this.model.textImmediate}`)
             )
-          )
+          ),
+          $.li({}, `maxTokensPerLine: ${this.model.maxTokensPerLine}`),
+          $.li({}, `maxLineLength: ${this.model.maxLineLength}`)
+        )
+      )
+    )
+  }
+
+  renderTreeSitter () {
+    return (
+      $.div({ className: "grammar-view", width: "500px"},
+        $.ul({},
+          $.li({}, "Tree-sitter to be added")
         )
       )
     )
@@ -62,8 +78,6 @@ export class ScopeView implements ViewModel {
   subscribeToEvents (): void {
     this.subscriptions.add(
       atom.workspace.observeTextEditors(editor => {
-        console.log("Adding", editor)
-
         this.subscriptions.add(
           editor.observeCursors(cursor => {
             this.subscriptions.add(cursor.onDidChangePosition(event => {
@@ -92,4 +106,8 @@ export class ScopeView implements ViewModel {
     this.model.update(editor, cursorPosition)
     this.update()
   }
+}
+
+function getRangeString (range: Range): string {
+  return `${range.start.row}:${range.start.column}--${range.end.row}:${range.end.column}`
 }

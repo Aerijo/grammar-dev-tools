@@ -2,10 +2,8 @@ import { Point, TextEditor, Range } from "atom"
 
 // TODO: Make settings
 const MAX_TEXT_PREVIEW_LENGTH = 100
-const ADJUST_END_OF_LINE_SCOPE = false
+const ADJUST_END_OF_LINE_SCOPE = true
 const REPLACE_SPACES = true
-const SPACE_CHAR = "\u2423"
-const NEWLINE_CHAR = "\u00ac" // ¬
 
 export const enum GRAMMAR_TYPE {
   TEXTMATE,
@@ -15,8 +13,10 @@ export const enum GRAMMAR_TYPE {
 export class ScopeModel {
 
   grammarType: GRAMMAR_TYPE
+  maxTokensPerLine: number | undefined
+  maxLineLength: number | undefined
 
-  rootLanguage: string
+  rootLanguage: string | undefined
 
   scopes: ReadonlyArray<string>
   text: string
@@ -28,7 +28,6 @@ export class ScopeModel {
 
   constructor () {
     this.grammarType = GRAMMAR_TYPE.TEXTMATE
-    this.rootLanguage = ""
     this.scopes = []
     this.text = ""
     this.textImmediate = ""
@@ -37,7 +36,11 @@ export class ScopeModel {
   }
 
   update (editor: TextEditor, position: Point): void {
-    this.rootLanguage = editor.getGrammar().name
+    const grammar: any = editor.getGrammar()
+    this.rootLanguage = grammar.name
+    this.maxTokensPerLine = grammar.getMaxTokensPerLine()
+    this.maxLineLength = grammar.maxLineLength
+
     if (isTreeSitter(editor)) {
       this.grammarType = GRAMMAR_TYPE.TREESITTER
       this.getTreeSitterBufferRangesForScopeAtPosition(editor, position)
@@ -180,7 +183,6 @@ export class ScopeModel {
       const tag = tags[tagIndex]
       if (tag < 0) {
         if (setImmediate) {
-          debugger
           setImmediate = false
           this.immediateRange.end.row = row
           this.immediateRange.end.column = column
@@ -238,16 +240,17 @@ export class ScopeModel {
   }
 
   setTexts (editor: TextEditor): void {
-    this.text = getTextPreview(editor.getTextInBufferRange(this.scopeRange))
-    this.textImmediate = getTextPreview(editor.getTextInBufferRange(this.immediateRange))
+    this.text = getTextPreview(editor.getTextInBufferRange(this.scopeRange), editor)
+    this.textImmediate = getTextPreview(editor.getTextInBufferRange(this.immediateRange), editor)
   }
 
   getTreeSitterBufferRangesForScopeAtPosition (editor: any, position: Point): void {
+    console.log("Getting Tree-sitter scope ranges...")
     console.log(editor, position)
 
     this.scopes = editor.languageMode.scopeDescriptorForPosition(position).getScopesArray()
-    this.scopeRange = new Range([0,0],[0,0])
-    this.immediateRange = new Range([0,0],[0,0])
+    this.scopeRange = new Range([0,0], [0,0])
+    this.immediateRange = new Range([0,0], [0,0])
   }
 }
 
@@ -264,15 +267,23 @@ function getColumnFromTagIndex (tags: number[], tagIndex: number): number {
   return column
 }
 
-function getTextPreview (text: string) {
+function getTextPreview (text: string, editor?: any) {
   if (text.length > MAX_TEXT_PREVIEW_LENGTH) {
     text = `${text.slice(0, 5)}...${text.slice(-5)}`
   }
 
-  if (REPLACE_SPACES) {
-    text = text
-      .replace(/\n/g, NEWLINE_CHAR)
-      .replace(/ /g, SPACE_CHAR)
+  if (REPLACE_SPACES && editor) {
+    const NEWLINE_CHAR: string = editor.invisibles.eol
+    const SPACE_CHAR: string = editor.invisibles.space
+    const TAB_CHAR: string = editor.invisibles.tab
+    text = text.replace(/\s/g, c => {
+      switch (c) {
+        case " ": return SPACE_CHAR
+        case "\n": return NEWLINE_CHAR
+        case "\t": return TAB_CHAR
+        default: return c
+      }
+    })
   }
 
   return text
