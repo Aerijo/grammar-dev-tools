@@ -2,7 +2,7 @@ import { Point, TextEditor, Range } from "atom"
 
 // TODO: Make settings
 const MAX_TEXT_PREVIEW_LENGTH = 100
-const ADJUST_END_OF_LINE_SCOPE = true
+const ADJUST_END_OF_LINE_SCOPE = false
 const REPLACE_SPACES = true
 const SPACE_CHAR = "\u2423"
 const NEWLINE_CHAR = "\u00ac" // ¬
@@ -32,8 +32,8 @@ export class ScopeModel {
     this.scopes = []
     this.text = ""
     this.textImmediate = ""
-    this.scopeRange = new Range()
-    this.immediateRange = new Range()
+    this.scopeRange = new Range([0,0], [0,0])
+    this.immediateRange = new Range([0,0], [0,0])
   }
 
   update (editor: TextEditor, position: Point): void {
@@ -104,6 +104,9 @@ export class ScopeModel {
         }
       }
     }
+
+    // TODO: Fix and remove this kludge
+    if (tagIndex === tags.length) tagIndex--
 
     this.scopes = scopes.map(tag => lm.grammar.scopeForId(tag))
 
