@@ -5,6 +5,7 @@ const MAX_TEXT_PREVIEW_LENGTH = 100
 const ADJUST_END_OF_LINE_SCOPE = true
 const REPLACE_SPACES = true
 const SPACE_CHAR = "\u2423"
+const NEWLINE_CHAR = "\u00ac" // ¬
 
 export const enum GRAMMAR_TYPE {
   TEXTMATE,
@@ -22,6 +23,8 @@ export class ScopeModel {
   textImmediate: string
   scopeRange: Range
   immediateRange: Range
+
+  marker: any
 
   constructor () {
     this.grammarType = GRAMMAR_TYPE.TEXTMATE
@@ -43,6 +46,19 @@ export class ScopeModel {
       this.getTextMateBufferRangesForScopeAtPosition(editor, position)
     }
 
+    // Prevents crashing if the walk screws up
+    this.scopeRange = editor.clipBufferRange(this.scopeRange)
+    this.immediateRange = editor.clipBufferRange(this.immediateRange)
+
+    if (!this.marker || !this.marker.isValid() || this.marker.isDestroyed()) {
+      this.marker = editor.markBufferRange(this.immediateRange)
+      editor.decorateMarker(this.marker, { type: "highlight", class: "grammar-range" })
+    }
+
+    if (!this.marker.getBufferRange().isEqual(this.immediateRange)) {
+      this.marker.setBufferRange(this.immediateRange)
+    }
+
     this.setTexts(editor)
   }
 
@@ -52,6 +68,8 @@ export class ScopeModel {
     const tokenizedLine = lm.tokenizedLineForRow(position.row)
     const tags: number[] = tokenizedLine.tags
     const scopes: number[] = tokenizedLine.openScopes.slice()
+
+    // TODO: Handle 0 width matches
 
     let index = 0
     let tagIndex = 0
@@ -74,6 +92,12 @@ export class ScopeModel {
         if (tag < 0 && (tag % 2) === 0) {
           scopes.push(tag + 1)
         } else if (tag < 0 && (tag % 2) !== 0) {
+          // TODO: Work out how to handle this. It can happen; see in Markdown
+          /*
+          ```latex
+          \begin{minted}{python}
+          ```
+           */
           debugger
         } else {
           break
@@ -201,32 +225,14 @@ export class ScopeModel {
         }
       }
     }
+
+    this.immediateRange.end = languageMode.buffer.getEndPosition()
+    this.scopeRange.end = this.immediateRange.end
   }
 
   setTexts (editor: TextEditor): void {
-    console.log("Setting text for", editor, MAX_TEXT_PREVIEW_LENGTH)
-
-    let text = editor.getTextInBufferRange(this.scopeRange)
-    if (text.length > MAX_TEXT_PREVIEW_LENGTH) {
-      text = `${text.slice(0, 5)}...${text.slice(-5)}`
-    }
-
-    if (REPLACE_SPACES) {
-      text = text.replace(/\s/g, SPACE_CHAR)
-    }
-
-    this.text = text
-
-    text = editor.getTextInBufferRange(this.immediateRange)
-    if (text.length > MAX_TEXT_PREVIEW_LENGTH) {
-      text = `${text.slice(0, 5)}...${text.slice(-5)}`
-    }
-
-    if (REPLACE_SPACES) {
-      text = text.replace(/\s/g, SPACE_CHAR)
-    }
-    this.textImmediate = text
-
+    this.text = getTextPreview(editor.getTextInBufferRange(this.scopeRange))
+    this.textImmediate = getTextPreview(editor.getTextInBufferRange(this.immediateRange))
   }
 
   getTreeSitterBufferRangesForScopeAtPosition (editor: any, position: Point): void {
@@ -249,4 +255,18 @@ function getColumnFromTagIndex (tags: number[], tagIndex: number): number {
     if (tag > 0) column += tag
   }
   return column
+}
+
+function getTextPreview (text: string) {
+  if (text.length > MAX_TEXT_PREVIEW_LENGTH) {
+    text = `${text.slice(0, 5)}...${text.slice(-5)}`
+  }
+
+  if (REPLACE_SPACES) {
+    text = text
+      .replace(/\n/g, NEWLINE_CHAR)
+      .replace(/ /g, SPACE_CHAR)
+  }
+
+  return text
 }
