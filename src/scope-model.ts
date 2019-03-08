@@ -25,10 +25,12 @@ export class ScopeModel {
   immediateRange: Range
 
   marker: any
+  path: ReadonlyArray<string>
 
   constructor () {
     this.grammarType = GRAMMAR_TYPE.TEXTMATE
     this.scopes = []
+    this.path = []
     this.text = ""
     this.textImmediate = ""
     this.scopeRange = new Range([0,0], [0,0])
@@ -48,22 +50,22 @@ export class ScopeModel {
       this.maxTokensPerLine = grammar.getMaxTokensPerLine()
       this.maxLineLength = grammar.maxLineLength
       this.getTextMateBufferRangesForScopeAtPosition(editor, position)
+
+      // Prevents crashing if the walk screws up
+      this.scopeRange = editor.clipBufferRange(this.scopeRange)
+      this.immediateRange = editor.clipBufferRange(this.immediateRange)
+
+      if (!this.marker || !this.marker.isValid() || this.marker.isDestroyed()) {
+        this.marker = editor.markBufferRange(this.immediateRange)
+        editor.decorateMarker(this.marker, { type: "highlight", class: "grammar-range" })
+      }
+
+      if (!this.marker.getBufferRange().isEqual(this.immediateRange)) {
+        this.marker.setBufferRange(this.immediateRange)
+      }
+
+      this.setTexts(editor)
     }
-
-    // Prevents crashing if the walk screws up
-    this.scopeRange = editor.clipBufferRange(this.scopeRange)
-    this.immediateRange = editor.clipBufferRange(this.immediateRange)
-
-    if (!this.marker || !this.marker.isValid() || this.marker.isDestroyed()) {
-      this.marker = editor.markBufferRange(this.immediateRange)
-      editor.decorateMarker(this.marker, { type: "highlight", class: "grammar-range" })
-    }
-
-    if (!this.marker.getBufferRange().isEqual(this.immediateRange)) {
-      this.marker.setBufferRange(this.immediateRange)
-    }
-
-    this.setTexts(editor)
   }
 
   getTextMateBufferRangesForScopeAtPosition (editor: any, position: Point): void {
@@ -249,9 +251,7 @@ export class ScopeModel {
     console.log("Getting Tree-sitter scope ranges...")
     console.log(editor, position)
 
-    this.scopes = editor.languageMode.scopeDescriptorForPosition(position).getScopesArray()
-    this.scopeRange = new Range([0,0], [0,0])
-    this.immediateRange = new Range([0,0], [0,0])
+    this.path = editor.syntaxTreeScopeDescriptorForBufferPosition(position).getScopesArray()
   }
 }
 

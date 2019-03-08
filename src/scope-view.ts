@@ -61,7 +61,10 @@ export class ScopeView implements ViewModel {
     return (
       $.div({ className: "grammar-view", width: "500px"},
         $.ul({},
-          $.li({}, "Tree-sitter to be added")
+          $.li({}, "Tree-sitter to be added"),
+          $.li({}, "Path:",
+            $.ul({}, this.model.path.map(n => $.li({}, n)))
+          )
         )
       )
     )
