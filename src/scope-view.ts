@@ -23,6 +23,12 @@ export class ScopeView implements ViewModel {
     etch.initialize(this)
   }
 
+  dispose () {
+    this.destroy()
+    this.subscriptions.dispose()
+    this.model.dispose()
+  }
+
   getTitle (): string {
     return "Grammar properties"
   }

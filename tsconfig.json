@@ -3,7 +3,7 @@
     "strict": true,
     "declaration": true,
     "declarationDir": "./types",
-    "forceConsistentCasingInFileNames": true,
+    "forceConsistentCasingInFileNames": false,
     "importHelpers": true,
     "lib": ["es2017", "dom"],
     "module": "commonjs",

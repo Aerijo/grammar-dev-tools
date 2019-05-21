@@ -73,7 +73,7 @@
     "binary-expression-operand-order": true,
     "class-name": true,
     "encoding": true,
-    "file-name-casing": [true, "camel-case"],
+    "file-name-casing": [false, "camel-case"],
     "import-spacing": true,
     "jsdoc-format": [true, "check-multiline-start"],
     "new-parens": true,

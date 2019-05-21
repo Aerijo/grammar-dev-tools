@@ -37,6 +37,12 @@ export class ScopeModel {
     this.immediateRange = new Range([0,0], [0,0])
   }
 
+  dispose () {
+    if (this.marker) {
+      this.marker.destroy()
+    }
+  }
+
   update (editor: TextEditor, position: Point): void {
     const grammar: any = editor.getGrammar()
     this.rootLanguage = grammar.name
@@ -248,9 +254,6 @@ export class ScopeModel {
   }
 
   getTreeSitterBufferRangesForScopeAtPosition (editor: any, position: Point): void {
-    console.log("Getting Tree-sitter scope ranges...")
-    console.log(editor, position)
-
     this.path = editor.syntaxTreeScopeDescriptorForBufferPosition(position).getScopesArray()
   }
 }

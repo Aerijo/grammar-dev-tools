@@ -6,19 +6,18 @@ import { ScopeModel } from "./scope-model"
 let subscriptions: CompositeDisposable
 
 export function activate () {
-  console.log("Activating grammar-dev-tools...")
+  if (!atom.inDevMode() && atom.config.get("grammar-dev-tools.onlyInDevMode")) return
 
-  if (!atom.inDevMode()) return
-
-  if (!subscriptions) subscriptions = new CompositeDisposable()
+  subscriptions = new CompositeDisposable()
 
   const model = new ScopeModel()
   const view = new ScopeView(model)
+
+  subscriptions.add(model, view)
 
   atom.workspace.open(view, { location: "right" })
 }
 
 export function deactivate () {
-  console.log("Deactivating grammar-dev-tools...")
   if (subscriptions) subscriptions.dispose()
 }
