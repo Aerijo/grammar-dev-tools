@@ -1,7 +1,7 @@
 {
   "name": "grammar-dev-tools",
   "main": "./dist/main",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "A package to assist development of grammars in Atom",
   "keywords": [
     "grammar"
